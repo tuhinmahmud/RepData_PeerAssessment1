@@ -1,25 +1,145 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
-output: 
+output:
   html_document:
-    keep_md: true
+    keep_md: false
 ---
 
 
 ## Loading and preprocessing the data
-
-
-
+1. use getBinaryURL() with verifypeer=FALSE to bypass ssl checking.
+2. use unz() to get the unzipped file from the downloaded zipped format 
+```{r}
+library(RCurl)
+fileUrl<-"https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"  
+zipFile <-'activity.zip'   
+fileName<-'activity.csv'  
+bin <- getBinaryURL(fileUrl,ssl.verifypeer=FALSE)
+con <- file(zipFile, open = "wb")
+writeBin(bin, con)
+close(con)
+setAs("character","myDate", function(from) as.Date(from, format="%Y-%m-%d"))  
+data <- read.csv(unz(zipFile, fileName), header=TRUE, 
+                 na.strings="NA",colClasses=c("date"="myDate")) 
+ 
+```
 ## What is mean total number of steps taken per day?
+```{r}
+library(plyr)
+library(dplyr)
+summary_data<-
+    data %>%
+      group_by(date) %>% 
+        summarise(total.steps=sum(steps,na.rm=TRUE))
+#summary_data
 
+meanTotalSteps <-
+    summary_data %>%
+        summarize(mean(total.steps))
+medianTotalSteps <-
+    summary_data %>%
+        summarize(median(total.steps))
+hist(summary_data$total.steps, xlab="Total number of steps per day", main=NULL, col="blue")
+abline(v=meanTotalSteps, col = c("red"))
+abline(v=medianTotalSteps, col = c("black"), lty = 2)
+
+sprintf("%s%.2f","Mean of total number of steps taken per day=",meanTotalSteps)
+sprintf("%s%.2f","Median of total number of steps taken per day=",medianTotalSteps)
+```
 
 
 ## What is the average daily activity pattern?
+```{r}
+library(lattice)
+library(sqldf)
+
+interval_data<-
+    data %>%
+      group_by(interval) %>% 
+        summarise(avg_steps=mean(steps,na.rm=TRUE))
 
 
 
+
+xyplot(avg_steps~interval, 
+       data=interval_data,
+       col.line =c("black"),
+       type = c("l")
+       )
+#interval_data
+sqldf("select interval, max(avg_steps) avg_steps from interval_data")
+
+```
 ## Imputing missing values
+``` {r}
+ndata <- ddply(data, .(date), 
+               function(df) {
+                   df$steps[is.na(df$steps)] <- 
+                    ifelse(is.nan(mean(df$steps, na.rm=TRUE)),
+                           0,
+                           mean(df$steps,na.rm=TRUE)
+                           ); 
+                   return(df)
+                   }
+               )
 
+#ndata
 
+sum( is.na( data$steps ) ) 
+#sum( is.na( ndata$steps ) ) 
 
+summary_data<-  
+    ndata %>%  
+      group_by(date) %>% 
+        summarise(total.steps=sum(steps,na.rm=TRUE)) 
+#summary_data  
+
+meanTotalSteps <-  
+    summary_data %>%  
+        summarize(mean(total.steps))  
+medianTotalSteps <-  
+    summary_data %>%  
+        summarize(median(total.steps))  
+
+sprintf("%s%.2f","Mean of total number of steps taken per day=",meanTotalSteps)
+sprintf("%s%.2f","Median of total number of steps taken per day=",medianTotalSteps)
+```
 ## Are there differences in activity patterns between weekdays and weekends?
+###weekends
+```{r}
+interval_data<-  
+    data %>%  
+      filter(weekdays(date) %in% c('Saturday','Sunday')) %>%   
+      group_by(interval) %>%     
+        summarise(avg_steps=mean(steps,na.rm=TRUE))    
+
+
+
+
+xyplot(avg_steps~interval,   
+       data=interval_data,  
+       col.line =c("black"),  
+       type = c("l")  
+       )
+#interval_data  
+sqldf("select interval, max(avg_steps) avg_steps from interval_data")  
+```
+###weekdays
+```{r}
+interval_data<-  
+    data %>%  
+      filter(!(weekdays(date) %in% c('Saturday','Sunday'))) %>%   
+      group_by(interval) %>%     
+        summarise(avg_steps=mean(steps,na.rm=TRUE))    
+
+
+
+
+xyplot(avg_steps~interval,   
+       data=interval_data,  
+       col.line =c("black"),  
+       type = c("l")  
+       )
+#interval_data  
+sqldf("select interval, max(avg_steps) avg_steps from interval_data")  
+```
