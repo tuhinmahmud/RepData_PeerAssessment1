@@ -201,9 +201,10 @@ sprintf("%s%.2f","Median of total number of steps taken per day=",medianTotalSte
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
-###weekends
+
 
 ```r
+#weekends
 interval_data_weekend<-  
     data %>%  
       filter(weekdays(date) %in% c('Saturday','Sunday')) %>%   
@@ -224,6 +225,7 @@ xyplot(avg_steps~interval,
 ![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-61.png) 
 
 ```r
+#weekdays
 interval_data_weekday<-  
     data %>%  
       filter(!(weekdays(date) %in% c('Saturday','Sunday'))) %>%   
