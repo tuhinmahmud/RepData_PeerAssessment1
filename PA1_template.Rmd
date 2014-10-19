@@ -81,7 +81,18 @@ sqldf("select interval, max(avg_steps) avg_steps from interval_data")
 
 ```
 ## Imputing missing values
-``` {r}
+1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
+```{r}
+## number of steps with missing values
+sum( is.na( data$steps ))
+## number of date missing
+completerow<-sum(complete.cases(data))
+missing_values<-nrow(data) - completerow
+missing_values
+
+### Strategy for replacing the missing values :
+#### replace missing value with mean/average value of steps for a given date.
+#### if there are no entries of steps for a given date  replace NA with 0
 ndata <- ddply(data, .(date), 
                function(df) {
                    df$steps[is.na(df$steps)] <- 
@@ -95,10 +106,7 @@ ndata <- ddply(data, .(date),
 
 #ndata
 ```
-1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
-```{r}
-sum( is.na( data$steps ))
-```
+
 ```{r}
 #sum( is.na( ndata$steps ) ) 
 

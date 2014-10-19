@@ -12,13 +12,6 @@ output:
 
 ```r
 library(RCurl)
-```
-
-```
-## Loading required package: bitops
-```
-
-```r
 fileUrl<-"https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"  
 zipFile <-'activity.zip'   
 fileName<-'activity.csv'  
@@ -42,39 +35,7 @@ data <- read.csv(unz(zipFile, fileName), header=TRUE,
 ```r
 library(plyr)
 library(dplyr)
-```
-
-```
-## 
-## Attaching package: 'dplyr'
-## 
-## The following objects are masked from 'package:plyr':
-## 
-##     arrange, desc, failwith, id, mutate, summarise, summarize
-## 
-## The following objects are masked from 'package:stats':
-## 
-##     filter, lag
-## 
-## The following objects are masked from 'package:base':
-## 
-##     intersect, setdiff, setequal, union
-```
-
-```r
 library(lubridate)
-```
-
-```
-## 
-## Attaching package: 'lubridate'
-## 
-## The following object is masked from 'package:plyr':
-## 
-##     here
-```
-
-```r
 newdata<-mutate(data,datetime=as.POSIXct(date)+dminutes(interval))
 summary_data<-
     newdata %>%
@@ -126,17 +87,7 @@ sprintf("%s%.2f","Median of total number of steps taken per day=",medianTotalSte
 ```r
 library(lattice)
 library(sqldf)
-```
 
-```
-## Loading required package: gsubfn
-## Loading required package: proto
-## Loading required package: RSQLite
-## Loading required package: DBI
-## Loading required package: RSQLite.extfuns
-```
-
-```r
 interval_data<-
     data %>%
       group_by(interval) %>% 
@@ -160,16 +111,36 @@ sqldf("select interval, max(avg_steps) avg_steps from interval_data")
 ```
 
 ```
-## Loading required package: tcltk
-```
-
-```
 ##   interval avg_steps
 ## 1      835     206.2
 ```
 ## Imputing missing values
+1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
 
 ```r
+## number of steps with missing values
+sum( is.na( data$steps ))
+```
+
+```
+## [1] 2304
+```
+
+```r
+## number of date missing
+completerow<-sum(complete.cases(data))
+missing_values<-nrow(data) - completerow
+missing_values
+```
+
+```
+## [1] 2304
+```
+
+```r
+### Strategy for replacing the missing values :
+#### replace missing value with mean/average value of steps for a given date.
+#### if there are no entries of steps for a given date  replace NA with 0
 ndata <- ddply(data, .(date), 
                function(df) {
                    df$steps[is.na(df$steps)] <- 
@@ -183,15 +154,7 @@ ndata <- ddply(data, .(date),
 
 #ndata
 ```
-1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs)
 
-```r
-sum( is.na( data$steps ))
-```
-
-```
-## [1] 2304
-```
 
 ```r
 #sum( is.na( ndata$steps ) ) 
@@ -207,7 +170,7 @@ ggplot(summary_data,aes(x=date,y=total.steps)) + geom_bar(stat="identity")+
     theme_bw() + theme(axis.text.x =element_text(angle=90)) + geom_smooth(method ="lm")
 ```
 
-![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6.png) 
+![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5.png) 
 
 ```r
 meanTotalSteps <-  
@@ -258,7 +221,7 @@ xyplot(avg_steps~interval,
        )
 ```
 
-![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-71.png) 
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-61.png) 
 
 ```r
 interval_data_weekday<-  
@@ -278,7 +241,7 @@ xyplot(avg_steps~interval,
        )
 ```
 
-![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-72.png) 
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-62.png) 
 
 ```r
 mylist <-  list(interval_data_weekday,interval_data_weekend)
@@ -291,7 +254,7 @@ xyplot(avg_steps ~ as.numeric(interval) | as.factor(weekday),
        xlab = "Five-minute time period", ylab = "Avg number of steps")
 ```
 
-![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-73.png) 
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-63.png) 
 
 ```r
 #interval during which maximum average activity occur during weekdays
